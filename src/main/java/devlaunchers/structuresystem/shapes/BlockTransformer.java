@@ -9,5 +9,5 @@ import org.bukkit.util.Vector;
  */
 public interface BlockTransformer {
 
-    public void transformBlock(Vector relativeLocation, Block blockToTransform);
+  public void transformBlock(Vector relativeLocation, Block blockToTransform);
 }
