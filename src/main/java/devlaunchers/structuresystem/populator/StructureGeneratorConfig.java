@@ -1,62 +1,63 @@
 package devlaunchers.structuresystem.populator;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
 public class StructureGeneratorConfig {
 
-  private File generatorConfigFile;
+    private File generatorConfigFile;
 
-  private FileConfiguration config;
+    private FileConfiguration config;
 
-  private List<String> allowedWorlds;
+    private List<String> allowedWorlds;
 
-  public StructureGeneratorConfig(String structureName, JavaPlugin plugin) {
-    File dataFolder = plugin.getDataFolder();
-    if (!dataFolder.exists()) {
-      dataFolder.mkdirs();
+    public StructureGeneratorConfig(String structureName, JavaPlugin plugin) {
+        File dataFolder = plugin.getDataFolder();
+        if (!dataFolder.exists()) {
+            dataFolder.mkdirs();
+        }
+
+        generatorConfigFile = new File(dataFolder, structureName + ".yml");
+
+        if (!generatorConfigFile.exists()) {
+            plugin.saveResource(structureName + ".yml", false);
+        }
+
+        config = YamlConfiguration.loadConfiguration(generatorConfigFile);
+
+        allowedWorlds = config.getStringList("allowedWorlds");
     }
 
-    generatorConfigFile = new File(dataFolder, structureName + ".yml");
-
-    if (!generatorConfigFile.exists()) {
-      plugin.saveResource(structureName + ".yml", false);
+    public boolean shouldWorldBePopulated(String worldName) {
+        for (String worldRegex : allowedWorlds) {
+            if (Pattern.matches(worldRegex, worldName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    config = YamlConfiguration.loadConfiguration(generatorConfigFile);
+    public List<Material> getMaterialList(String key) {
+        List<Material> materials = new ArrayList<>();
+        List<String> materialNames = getStructureConfig().getStringList(key);
+        if (materialNames == null) {
+            return null;
+        }
 
-    allowedWorlds = config.getStringList("allowedWorlds");
-  }
-
-  public boolean shouldWorldBePopulated(String worldName) {
-    for (String worldRegex : allowedWorlds) {
-      if (Pattern.matches(worldRegex, worldName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public List<Material> getMaterialList(String key) {
-    List<Material> materials = new ArrayList<>();
-    List<String> materialNames = getStructureConfig().getStringList(key);
-    if (materialNames == null) {
-      return null;
+        for (String material : materialNames) {
+            materials.add(Material.valueOf(material));
+        }
+        return materials;
     }
 
-    for (String material : materialNames) {
-      materials.add(Material.valueOf(material));
+    public FileConfiguration getStructureConfig() {
+        return config;
     }
-    return materials;
-  }
-
-  public FileConfiguration getStructureConfig() {
-    return config;
-  }
 }
