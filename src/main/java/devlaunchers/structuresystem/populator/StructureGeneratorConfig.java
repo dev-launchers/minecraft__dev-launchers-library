@@ -9,29 +9,17 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class StructureGeneratorConfig {
+import devlaunchers.config.DevLauncherConfiguration;
+import devlaunchers.plugin.DevLaunchersPlugin;
 
-  private File generatorConfigFile;
-
-  private FileConfiguration config;
+public class StructureGeneratorConfig extends DevLauncherConfiguration {
 
   private List<String> allowedWorlds;
 
   public StructureGeneratorConfig(String structureName, JavaPlugin plugin) {
-    File dataFolder = plugin.getDataFolder();
-    if (!dataFolder.exists()) {
-      dataFolder.mkdirs();
-    }
+    super(plugin, structureName + ".yml");
 
-    generatorConfigFile = new File(dataFolder, structureName + ".yml");
-
-    if (!generatorConfigFile.exists()) {
-      plugin.saveResource(structureName + ".yml", false);
-    }
-
-    config = YamlConfiguration.loadConfiguration(generatorConfigFile);
-
-    allowedWorlds = config.getStringList("allowedWorlds");
+    allowedWorlds = getStringList("allowedWorlds");
   }
 
   public boolean shouldWorldBePopulated(String worldName) {
@@ -41,22 +29,5 @@ public class StructureGeneratorConfig {
       }
     }
     return false;
-  }
-
-  public List<Material> getMaterialList(String key) {
-    List<Material> materials = new ArrayList<>();
-    List<String> materialNames = getStructureConfig().getStringList(key);
-    if (materialNames == null) {
-      return null;
-    }
-
-    for (String material : materialNames) {
-      materials.add(Material.valueOf(material));
-    }
-    return materials;
-  }
-
-  public FileConfiguration getStructureConfig() {
-    return config;
   }
 }
