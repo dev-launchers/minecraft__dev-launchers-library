@@ -1,16 +1,9 @@
 package devlaunchers.structuresystem.populator;
 
-import java.io.File;
-import java.util.ArrayList;
+import devlaunchers.config.DevLauncherConfiguration;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.bukkit.Material;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import devlaunchers.config.DevLauncherConfiguration;
-import devlaunchers.plugin.DevLaunchersPlugin;
 
 public class StructureGeneratorConfig extends DevLauncherConfiguration {
 
