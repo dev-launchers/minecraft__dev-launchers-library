@@ -28,7 +28,7 @@ jobs:
         id: set-args
         with:
           script: |
-            if (github.ref.startsWith("refs/remotes/pull/")){
+            if (ref.startsWith("refs/remotes/pull/")){
               return "-r --set-exit-if-changed"
             }
             return "-r";
