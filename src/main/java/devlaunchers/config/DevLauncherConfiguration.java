@@ -1,32 +1,47 @@
 package devlaunchers.config;
 
-import com.google.common.base.Charsets;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import org.apache.commons.lang.NotImplementedException;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
+import com.google.common.base.Charsets;
+
 public class DevLauncherConfiguration extends FileConfiguration {
+
+  private static Map<String, Color> colorMapping = new HashMap<String, Color>();
+
+  static {
+    initColorMapping();
+  }
 
   private DevLauncherConfiguration parent;
 
@@ -94,18 +109,6 @@ public class DevLauncherConfiguration extends FileConfiguration {
     return materials;
   }
 
-  public ItemMeta getItemMeta(String path) {
-    throw new NotImplementedException();
-  }
-
-  public ItemMeta getItemMeta(String path, ItemMeta def) {
-    throw new NotImplementedException();
-  }
-
-  public boolean isItemMeta(String path) {
-    return false;
-  }
-
   // -- Reimplementation to remove unreadable Serialization --
 
   @Override
@@ -167,6 +170,65 @@ public class DevLauncherConfiguration extends FileConfiguration {
     return false;
   }
 
+  public void loadItemMetaForItemStack(String path, ItemMeta baseMeta) {
+    if (isSet(path + ".displayName")) {
+      baseMeta.setDisplayName(getString(path + ".displayName"));
+    }
+
+    if (isSet(path + ".modelData")) {
+      baseMeta.setCustomModelData(getInt(path + ".modelData"));
+    }
+
+    if (isBoolean(path + ".unbreakable")) {
+      baseMeta.setUnbreakable(getBoolean(path + ".unbreakable"));
+    }
+
+    if (isList(path + ".placeable")) {
+      baseMeta.setPlaceableKeys(
+          getStringList(path + ".placeable")
+              .stream()
+              .map(NamespacedKey::minecraft)
+              .collect(Collectors.toList()));
+    }
+
+    if (isList(path + ".destroyable")) {
+      baseMeta.setDestroyableKeys(
+          getStringList(path + ".destroyable")
+              .stream()
+              .map(NamespacedKey::minecraft)
+              .collect(Collectors.toList()));
+    }
+
+    if (isConfigurationSection(path + ".attributes")) {
+      Map<String, Object> values = getConfigurationSection(path + ".attributes").getValues(true);
+      for (String attr : values.keySet()) {
+        Attribute attribute = Attribute.valueOf(attr);
+        if (attribute == null) continue;
+
+        Map<String, Object> modifier = (Map<String, Object>) values.get(attr);
+        AttributeModifier attributeModifier = AttributeModifier.deserialize(modifier);
+        baseMeta.addAttributeModifier(attribute, attributeModifier);
+      }
+    }
+
+    if (isConfigurationSection(path + ".enchantments")) {
+      for (String enchantment : getConfigurationSection(path + ".enchantments").getKeys(false)) {
+        Enchantment ench = Enchantment.getByKey(NamespacedKey.minecraft(enchantment));
+        if (ench == null) continue;
+
+        int level = getInt(path + ".enchantments." + enchantment);
+        baseMeta.addEnchant(ench, level, true);
+      }
+    }
+
+    if (isList(path + ".flags")) {
+      getStringList(path + ".flags")
+          .stream()
+          .map(ItemFlag::valueOf)
+          .forEach(baseMeta::addItemFlags);
+    }
+  }
+
   @Override
   public ItemStack getItemStack(String path) {
     if (isMaterial(path)) {
@@ -185,9 +247,10 @@ public class DevLauncherConfiguration extends FileConfiguration {
         itemStack.setLore(getStringList(path + ".lore"));
       }
 
-      if (isItemMeta(path + ".meta")) {
-        itemStack.setItemMeta(getItemMeta(path + ".meta"));
+      if (isConfigurationSection(path + ".meta")) {
+        loadItemMetaForItemStack(path + ".meta", itemStack.getItemMeta());
       }
+
       return itemStack;
     } else {
       return null;
@@ -196,7 +259,11 @@ public class DevLauncherConfiguration extends FileConfiguration {
 
   @Override
   public ItemStack getItemStack(String path, ItemStack def) {
-    throw new NotImplementedException();
+    ItemStack is = getItemStack(path);
+    if (is == null) {
+      return def;
+    }
+    return is;
   }
 
   @Override
@@ -206,32 +273,70 @@ public class DevLauncherConfiguration extends FileConfiguration {
 
   @Override
   public Color getColor(String path) {
-    throw new NotImplementedException();
+    if (isColor(path)) {
+      if (isString(path)) {
+        return colorMapping.get(getString(path).toLowerCase());
+      } else {
+        return Color.fromRGB(
+            getInt(path + ".red"), getInt(path + ".green"), getInt(path + ".blue"));
+      }
+    }
+    return null;
   }
 
   @Override
   public Color getColor(String path, Color def) {
-    throw new NotImplementedException();
+    Color color = getColor(path);
+    if (color == null) {
+      return def;
+    }
+    return color;
   }
 
   @Override
   public boolean isColor(String path) {
-    throw new NotImplementedException();
+    if (isString(path) && colorMapping.containsKey(getString(path).toLowerCase())) {
+      return true;
+    } else {
+      return isInt(path + ".red") && isInt(path + ".green") && isInt(path + ".blue");
+    }
   }
 
   @Override
   public Location getLocation(String path) {
-    throw new NotImplementedException();
+    if (isLocation(path)) {
+      World world = Bukkit.getWorld(getString(path + ".world"));
+      if (world == null) return null;
+
+      double x = getDouble(path + ".x");
+      double y = getDouble(path + ".y");
+      double z = getDouble(path + ".z");
+      float yaw = (float) getDouble(path + ".yaw", 0);
+      float pitch = (float) getDouble(path + ".pitch", 0);
+      return new Location(world, x, y, z, yaw, pitch);
+    }
+    return null;
   }
 
   @Override
   public Location getLocation(String path, Location def) {
-    throw new NotImplementedException();
+    Location loc = getLocation(path);
+    if (loc == null) {
+      return def;
+    }
+    return loc;
   }
 
   @Override
   public boolean isLocation(String path) {
-    throw new NotImplementedException();
+    return isString(path + ".world")
+        && isNumber(path + ".x")
+        && isNumber(path + ".y")
+        && isNumber(path + ".z");
+  }
+
+  public boolean isNumber(String path) {
+    return get(path) instanceof Number;
   }
 
   // -- Standard Configuration Methods --
@@ -498,5 +603,25 @@ public class DevLauncherConfiguration extends FileConfiguration {
   @Override
   protected String buildHeader() {
     return "";
+  }
+
+  private static void initColorMapping() {
+    colorMapping.put("aqua", Color.AQUA);
+    colorMapping.put("black", Color.BLACK);
+    colorMapping.put("blue", Color.BLUE);
+    colorMapping.put("fuchsia", Color.FUCHSIA);
+    colorMapping.put("gray", Color.GRAY);
+    colorMapping.put("green", Color.GREEN);
+    colorMapping.put("lime", Color.LIME);
+    colorMapping.put("maroon", Color.MAROON);
+    colorMapping.put("navy", Color.NAVY);
+    colorMapping.put("olive", Color.OLIVE);
+    colorMapping.put("orange", Color.ORANGE);
+    colorMapping.put("purple", Color.PURPLE);
+    colorMapping.put("red", Color.RED);
+    colorMapping.put("silver", Color.SILVER);
+    colorMapping.put("teal", Color.TEAL);
+    colorMapping.put("white", Color.WHITE);
+    colorMapping.put("yellow", Color.YELLOW);
   }
 }
