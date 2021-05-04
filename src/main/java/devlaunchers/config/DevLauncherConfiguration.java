@@ -1,5 +1,6 @@
 package devlaunchers.config;
 
+import com.google.common.base.Charsets;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,8 +32,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
-
-import com.google.common.base.Charsets;
 
 public class DevLauncherConfiguration extends FileConfiguration {
 
