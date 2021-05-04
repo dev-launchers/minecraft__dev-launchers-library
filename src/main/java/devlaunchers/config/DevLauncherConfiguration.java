@@ -336,6 +336,136 @@ public class DevLauncherConfiguration extends FileConfiguration {
     return get(path) instanceof Number;
   }
 
+  // Override Setter
+
+  @Override
+  public void set(String path, Object value) {
+    if (value instanceof Color) {
+      set(path, (Color) value);
+    } else if (value instanceof ItemStack) {
+      set(path, (ItemStack) value);
+    } else if (value instanceof Location) {
+      set(path, (Location) value);
+    } else if (value instanceof Material) {
+      set(path, (Material) value);
+    } else if (value instanceof OfflinePlayer) {
+      set(path, (OfflinePlayer) value);
+    } else if (value instanceof Vector) {
+      set(path, (Vector) value);
+    } else if (value instanceof List
+        && !((List<?>) value).isEmpty()
+        && ((List<?>) value).get(0) instanceof Material) {
+      // MaterialList
+      List<Material> value2 = (List<Material>) value;
+      set(path, value2);
+    } else {
+      configuration.set(path, value);
+    }
+  }
+
+  public void set(String path, Color color) {
+    if (colorMapping.containsValue(color)) {
+      for (String key : colorMapping.keySet()) {
+        if (colorMapping.get(key).equals(color)) {
+          set(path, key);
+          return;
+        }
+      }
+    } else {
+      set(path + ".red", color.getRed());
+      set(path + ".green", color.getGreen());
+      set(path + ".blue", color.getBlue());
+    }
+  }
+
+  public void set(String path, ItemStack itemStack) {
+    if (itemStack.equals(new ItemStack(itemStack.getType()))) {
+      set(path, itemStack.getType());
+    } else {
+      set(path + ".material", itemStack.getType());
+      set(path + ".amount", itemStack.getAmount());
+
+      if (itemStack.hasItemMeta()) {
+        if (itemStack.getLore() != null) {
+          set(path + ".lore", itemStack.getLore());
+        }
+        ItemMeta meta = itemStack.getItemMeta();
+
+        if (meta.hasDisplayName()) {
+          set(path + ".meta.displayName", meta.getDisplayName());
+        }
+        if (meta.hasCustomModelData()) {
+          set(path + ".meta.modelData", meta.getCustomModelData());
+        }
+        if (meta.isUnbreakable()) {
+          set(path + ".meta.unbreakable", true);
+        }
+        if (meta.hasPlaceableKeys()) {
+          set(
+              path + ".meta.placeable",
+              meta.getPlaceableKeys()
+                  .stream()
+                  .map((key) -> key.getKey())
+                  .collect(Collectors.toList()));
+        }
+        if (meta.hasDestroyableKeys()) {
+          set(
+              path + ".meta.destroyable",
+              meta.getDestroyableKeys()
+                  .stream()
+                  .map((key) -> key.getKey())
+                  .collect(Collectors.toList()));
+        }
+        if (meta.hasAttributeModifiers()) {
+          meta.getAttributeModifiers()
+              .forEach(
+                  (attr, mod) -> {
+                    set(path + ".meta.attributes." + attr.name(), mod.serialize());
+                  });
+        }
+        if (meta.hasEnchants()) {
+          meta.getEnchants()
+              .forEach(
+                  (ench, level) -> {
+                    set(path + ".meta.enchantments." + ench.getKey().getKey(), level);
+                  });
+        }
+        if (!meta.getItemFlags().isEmpty()) {
+          set(
+              path + ".meta.flags",
+              meta.getItemFlags().stream().map((flag) -> flag.name()).collect(Collectors.toList()));
+        }
+      }
+    }
+  }
+
+  public void set(String path, Location location) {
+    set(path + ".x", location.getX());
+    set(path + ".y", location.getY());
+    set(path + ".z", location.getZ());
+    set(path + ".yaw", location.getYaw());
+    set(path + ".pitch", location.getPitch());
+    set(path + ".world", location.getWorld().getName());
+  }
+
+  public void set(String path, Material material) {
+    set(path, material.name());
+  }
+
+  public void set(String path, List<Material> materialList) {
+    set(path, materialList.stream().map((mat) -> mat.name()).collect(Collectors.toList()));
+  }
+
+  public void set(String path, OfflinePlayer player) {
+    set(path, player.getUniqueId().toString());
+  }
+
+  public void set(String path, Vector vec) {
+    set(path + ".x", vec.getX());
+    set(path + ".y", vec.getY());
+    set(path + ".z", vec.getZ());
+  }
+
   // -- Standard Configuration Methods --
 
   @Override
@@ -386,11 +516,6 @@ public class DevLauncherConfiguration extends FileConfiguration {
   @Override
   public Object get(String path, Object def) {
     return configuration.get(path, def);
-  }
-
-  @Override
-  public void set(String path, Object value) {
-    configuration.set(path, value);
   }
 
   @Override
