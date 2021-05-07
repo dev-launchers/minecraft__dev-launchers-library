@@ -2,20 +2,18 @@ package devlaunchers.plugin;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import devlaunchers.config.DevLauncherConfiguration;
 import devlaunchers.items.ItemRepository;
 
 public abstract class DevLaunchersPlugin extends JavaPlugin {
 
   private Map<String, DevLauncherConfiguration> configurations = new HashMap<>();
-  
+
   @Override
   public abstract void onEnable();
-  
+
   @Override
   public abstract void onDisable();
 
