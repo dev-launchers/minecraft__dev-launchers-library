@@ -29,7 +29,7 @@ jobs:
         with:
           script: |
             if (context.ref.startsWith("refs/pull/")){
-              return "-r --set-exit-if-changed"
+              return "--set-exit-if-changed"
             }
             return "-r";
           result-encoding: string
