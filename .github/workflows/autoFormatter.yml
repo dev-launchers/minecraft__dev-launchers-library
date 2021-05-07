@@ -29,9 +29,9 @@ jobs:
         with:
           script: |
             if (context.ref.startsWith("refs/pull/")){
-              return "--set-exit-if-changed"
+              return "--set-exit-if-changed --skip-sorting-imports"
             }
-            return "-r";
+            return "-r --skip-sorting-imports";
           result-encoding: string
       
       - name: Google Java Format
