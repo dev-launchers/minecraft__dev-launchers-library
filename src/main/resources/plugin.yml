@@ -1,0 +1,5 @@
+name: DevLaunchersLibrary
+version: ${project.version}
+main: devlaunchers.plugin.LibraryPlugin
+api-version: 1.16
+load: startup
