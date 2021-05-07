@@ -30,7 +30,7 @@ public abstract class Economy {
     return economyPlugin;
   }
 
-  enum MoneyTransferResult {
+  public enum MoneyTransferResult {
     SUCCESS(true),
     INSUFFICIENT_BALANCE(false),
     INVENTORY_OVERFLOW(false);
