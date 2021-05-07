@@ -167,12 +167,12 @@ public class DevLauncherConfiguration extends FileConfiguration {
     return false;
   }
 
-  public void loadItemMetaForItemStack(String path, ItemMeta baseMeta) {
-    if (isSet(path + ".displayName")) {
+  public ItemMeta loadItemMetaForItemStack(String path, ItemMeta baseMeta) {
+    if (isString(path + ".displayName")) {
       baseMeta.setDisplayName(getString(path + ".displayName"));
     }
 
-    if (isSet(path + ".modelData")) {
+    if (isInt(path + ".modelData")) {
       baseMeta.setCustomModelData(getInt(path + ".modelData"));
     }
 
@@ -224,6 +224,7 @@ public class DevLauncherConfiguration extends FileConfiguration {
           .map(ItemFlag::valueOf)
           .forEach(baseMeta::addItemFlags);
     }
+    return baseMeta;
   }
 
   @Override
@@ -245,7 +246,8 @@ public class DevLauncherConfiguration extends FileConfiguration {
       }
 
       if (isConfigurationSection(path + ".meta")) {
-        loadItemMetaForItemStack(path + ".meta", itemStack.getItemMeta());
+        ItemMeta meta = loadItemMetaForItemStack(path + ".meta", itemStack.getItemMeta());
+        itemStack.setItemMeta(meta);
       }
 
       return itemStack;

@@ -28,10 +28,10 @@ jobs:
         id: set-args
         with:
           script: |
-            if (context.ref.startsWith("refs/remotes/pull/")){
-              return "-r --set-exit-if-changed"
+            if (context.ref.startsWith("refs/pull/")){
+              return "--set-exit-if-changed --skip-sorting-imports"
             }
-            return "-r";
+            return "-r --skip-sorting-imports";
           result-encoding: string
       
       - name: Google Java Format
@@ -40,6 +40,6 @@ jobs:
         uses: axel-op/googlejavaformat-action@v3.4.0
         with:
           version: 1.6
-          skipCommit: ${{ startsWith(github.ref, 'refs/remotes/pull/') }}
+          skipCommit: ${{ startsWith(github.ref, 'refs/pull/') }}
           args: ${{steps.set-args.outputs.result}}
           

@@ -8,6 +8,10 @@ public final class ItemRepository {
 
   private static final Map<String, ItemStack> registeredItems = new HashMap<String, ItemStack>();
 
+  public static void clearRepository() {
+    registeredItems.clear();
+  }
+
   /**
    * Registers a Item Definition that is to be shared between Plugins.
    *
