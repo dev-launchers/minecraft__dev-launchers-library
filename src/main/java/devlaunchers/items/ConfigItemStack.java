@@ -8,8 +8,7 @@ import java.util.Map;
 public final class ConfigItemStack extends ItemStack implements ConfigurationSerializable {
 
   /**
-   * Allows configs to directly give reference to custom ItemStack
-   * items in shared plugin.
+   * Allows configs to directly give reference to custom ItemStack items in shared plugin.
    *
    * @param args Configuration class map containing keys and values
    * @return Returns ItemStack from devLauncherItem parameter
