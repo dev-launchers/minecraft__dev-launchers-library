@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import devlaunchers.items.ItemRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -31,6 +33,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
+
+import static org.bukkit.Bukkit.getLogger;
 
 public class DevLauncherConfiguration extends FileConfiguration {
 
@@ -104,6 +108,10 @@ public class DevLauncherConfiguration extends FileConfiguration {
       return def;
     }
     return materials;
+  }
+
+  private boolean isDevSharedItem(String path) {
+    return isString(path + ".devLauncherItem") && (getString(path + ".devLauncherItem")) != null;
   }
 
   // -- Reimplementation to remove unreadable Serialization --
@@ -182,16 +190,14 @@ public class DevLauncherConfiguration extends FileConfiguration {
 
     if (isList(path + ".placeable")) {
       baseMeta.setPlaceableKeys(
-          getStringList(path + ".placeable")
-              .stream()
+          getStringList(path + ".placeable").stream()
               .map(NamespacedKey::minecraft)
               .collect(Collectors.toList()));
     }
 
     if (isList(path + ".destroyable")) {
       baseMeta.setDestroyableKeys(
-          getStringList(path + ".destroyable")
-              .stream()
+          getStringList(path + ".destroyable").stream()
               .map(NamespacedKey::minecraft)
               .collect(Collectors.toList()));
     }
@@ -219,8 +225,7 @@ public class DevLauncherConfiguration extends FileConfiguration {
     }
 
     if (isList(path + ".flags")) {
-      getStringList(path + ".flags")
-          .stream()
+      getStringList(path + ".flags").stream()
           .map(ItemFlag::valueOf)
           .forEach(baseMeta::addItemFlags);
     }
@@ -251,6 +256,15 @@ public class DevLauncherConfiguration extends FileConfiguration {
       }
 
       return itemStack;
+    } else if (isDevSharedItem(path)) {
+      int amount = 1;
+      if (isInt(path + ".amount")) {
+        amount = getInt(path + ".amount");
+      }
+
+      ItemStack itemStack = ItemRepository.getItem(getString(path + ".devLauncherItem"));
+      itemStack.setAmount(amount);
+      return itemStack;
     } else {
       return null;
     }
@@ -267,7 +281,7 @@ public class DevLauncherConfiguration extends FileConfiguration {
 
   @Override
   public boolean isItemStack(String path) {
-    return isMaterial(path) || isMaterial(path + ".material");
+    return isMaterial(path) || isMaterial(path + ".material") || isDevSharedItem(path);
   }
 
   @Override
@@ -405,16 +419,14 @@ public class DevLauncherConfiguration extends FileConfiguration {
         if (meta.hasPlaceableKeys()) {
           set(
               path + ".meta.placeable",
-              meta.getPlaceableKeys()
-                  .stream()
+              meta.getPlaceableKeys().stream()
                   .map((key) -> key.getKey())
                   .collect(Collectors.toList()));
         }
         if (meta.hasDestroyableKeys()) {
           set(
               path + ".meta.destroyable",
-              meta.getDestroyableKeys()
-                  .stream()
+              meta.getDestroyableKeys().stream()
                   .map((key) -> key.getKey())
                   .collect(Collectors.toList()));
         }
